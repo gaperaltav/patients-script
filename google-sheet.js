@@ -52,6 +52,7 @@ function collectIntakeRows() {
   let patientId = 1;
 
   while (true) {
+    Logger.log('Entering in while')
     try {
       const response = fetchPatientById(patientId, token);
       const status = response.getResponseCode();
@@ -189,6 +190,7 @@ function main() {
   Logger.log("main: start");
   const values = buildSheetValues(collectIntakeRows());
   writeToSheet(values);
-  writeToCsvFile(values);
   Logger.log("main: done");
 }
+
+ main()
