@@ -12,6 +12,7 @@ if (!bearerToken) {
 
 async function fetchPatientById(patientId) {
   const url = baseUrl + patientId;
+  console.log("fetchPatientById: GET " + url);
 
   return axios.get(url, {
     headers: {

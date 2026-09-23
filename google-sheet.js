@@ -5,6 +5,7 @@ const CSV_FILE_NAME = "patients.csv";
 const MAX_PATIENTS = 10;
 
 function getBearerToken() {
+  Logger.log("getBearerToken: reading BEARER_TOKEN from script properties");
   const token =
     PropertiesService.getScriptProperties().getProperty("BEARER_TOKEN");
   if (!token) {
@@ -14,6 +15,7 @@ function getBearerToken() {
 }
 
 function fetchPatientById(patientId, token) {
+  Logger.log("fetchPatientById: GET " + BASE_URL + patientId);
   return UrlFetchApp.fetch(BASE_URL + patientId, {
     method: "get",
     headers: {
@@ -25,6 +27,13 @@ function fetchPatientById(patientId, token) {
 }
 
 function toIntakeRows(patientId, intakes = []) {
+  Logger.log(
+    "toIntakeRows: patient " +
+      patientId +
+      " has " +
+      intakes.length +
+      " intakes",
+  );
   return intakes.map(
     ({ id: intakeId, encounterNote, signatureId, ...intake }) => ({
       patientId,
@@ -36,6 +45,7 @@ function toIntakeRows(patientId, intakes = []) {
 }
 
 function collectIntakeRows() {
+  Logger.log("collectIntakeRows: start");
   const token = getBearerToken();
   const rows = [];
   let patientsFound = 0;
@@ -45,6 +55,9 @@ function collectIntakeRows() {
     try {
       const response = fetchPatientById(patientId, token);
       const status = response.getResponseCode();
+      Logger.log(
+        "collectIntakeRows: patient " + patientId + " responded " + status,
+      );
 
       if (status === 404) {
         patientId++;
@@ -78,6 +91,13 @@ function collectIntakeRows() {
     }
   }
 
+  Logger.log(
+    "collectIntakeRows: done, " +
+      patientsFound +
+      " patients, " +
+      rows.length +
+      " rows",
+  );
   return rows;
 }
 
@@ -92,7 +112,9 @@ function toCellValue(value) {
 }
 
 function buildSheetValues(rows) {
+  Logger.log("buildSheetValues: building values from " + rows.length + " rows");
   if (rows.length === 0) {
+    Logger.log("buildSheetValues: there are no rows to create the sheet");
     return [];
   }
 
@@ -108,12 +130,14 @@ function buildSheetValues(rows) {
   });
 
   const body = rows.map((row) => headers.map((key) => toCellValue(row[key])));
+  Logger.log("buildSheetValues: " + headers.length + " columns");
   return [headers, ...body];
 }
 
 function writeToSheet(values) {
+  Logger.log("writeToSheet: start");
   if (values.length === 0) {
-    Logger.log("No intake rows to write");
+    Logger.log("writeToSheet: no intake rows to write");
     return;
   }
 
@@ -123,6 +147,12 @@ function writeToSheet(values) {
   sheet.clearContents();
   sheet.getRange(1, 1, values.length, values[0].length).setValues(values);
   sheet.setFrozenRows(1);
+  Logger.log(
+    "writeToSheet: wrote " +
+      values.length +
+      " rows (including header) to " +
+      SHEET_NAME,
+  );
 }
 
 function toCsvField(value) {
@@ -131,12 +161,14 @@ function toCsvField(value) {
 }
 
 function toCsv(values) {
+  Logger.log("toCsv: converting " + values.length + " rows");
   return values.map((row) => row.map(toCsvField).join(",")).join("\r\n");
 }
 
 function writeToCsvFile(values) {
+  Logger.log("writeToCsvFile: start");
   if (values.length === 0) {
-    Logger.log("No intake rows to write");
+    Logger.log("writeToCsvFile: no intake rows to write");
     return;
   }
 
@@ -144,16 +176,19 @@ function writeToCsvFile(values) {
   const existing = DriveApp.getFilesByName(CSV_FILE_NAME);
 
   if (existing.hasNext()) {
-    existing.next().setContent(csv);
+    const file = existing.next().setContent(csv);
+    Logger.log("writeToCsvFile: file updated: " + file.getUrl());
     return;
   }
 
   const file = DriveApp.createFile(CSV_FILE_NAME, csv, MimeType.CSV);
-  Logger.log("File created: " + file.getUrl());
+  Logger.log("writeToCsvFile: file created: " + file.getUrl());
 }
 
 function main() {
+  Logger.log("main: start");
   const values = buildSheetValues(collectIntakeRows());
   writeToSheet(values);
   writeToCsvFile(values);
+  Logger.log("main: done");
 }

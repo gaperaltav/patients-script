@@ -1,6 +1,13 @@
 const { fetchPatientById } = require("./patient-service");
 
 function toIntakeRows(patientId, intakes = []) {
+  console.log(
+    "toIntakeRows: patient " +
+      patientId +
+      " has " +
+      intakes.length +
+      " intakes",
+  );
   return intakes.map(
     ({ id: intakeId, encounterNote, signatureId, ...intake }) => ({
       patientId,
@@ -12,6 +19,7 @@ function toIntakeRows(patientId, intakes = []) {
 }
 
 async function fetchPatientIntakes() {
+  console.log("fetchPatientIntakes: start");
   const patients = [];
   const intakeRows = [];
   let patientId = 1;
@@ -19,6 +27,12 @@ async function fetchPatientIntakes() {
   while (true) {
     try {
       const response = await fetchPatientById(patientId);
+      console.log(
+        "fetchPatientIntakes: patient " +
+          patientId +
+          " responded " +
+          response.status,
+      );
 
       if (response.status == 404) {
         patientId++;
@@ -51,6 +65,13 @@ async function fetchPatientIntakes() {
     }
   }
 
+  console.log(
+    "fetchPatientIntakes: done, " +
+      patients.length +
+      " patients, " +
+      intakeRows.length +
+      " rows",
+  );
   console.log(JSON.stringify(intakeRows, null, 2));
   return intakeRows;
 }
