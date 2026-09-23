@@ -35,10 +35,11 @@ function toIntakeRows(patientId, intakes = []) {
       " intakes",
   );
   return intakes.map(
-    ({ id: intakeId, encounterNote, signatureId, ...intake }) => ({
+    ({ id: intakeId, encounterNote, providerId, signatureId, ...intake }) => ({
       patientId,
       intakeId,
       ...intake,
+      provider: intake.provider?.fullName ?? "",
       signatureId: Boolean(signatureId),
     }),
   );
@@ -52,7 +53,7 @@ function collectIntakeRows() {
   let patientId = 1;
 
   while (true) {
-    Logger.log('Entering in while')
+    Logger.log("Entering in while");
     try {
       const response = fetchPatientById(patientId, token);
       const status = response.getResponseCode();
@@ -193,4 +194,4 @@ function main() {
   Logger.log("main: done");
 }
 
- main()
+main();
