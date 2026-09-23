@@ -148,7 +148,8 @@ function writeToCsvFile(values) {
     return;
   }
 
-  DriveApp.createFile(CSV_FILE_NAME, csv, MimeType.CSV);
+  const file = DriveApp.createFile(CSV_FILE_NAME, csv, MimeType.CSV);
+  Logger.log("File created: " + file.getUrl());
 }
 
 function main() {
